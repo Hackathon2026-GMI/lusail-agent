@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lusail-stadium.qa/schemas/bubble-response.json",
+  "title": "Lusail Stadium Bubble Response",
+  "description": "Structured output contract for the Gemma 4 on-device model. The model returns 2–3 floating action bubbles in response to a scan context.",
+  "type": "array",
+  "minItems": 2,
+  "maxItems": 3,
+  "items": {
+    "$ref": "#/$defs/Bubble"
+  },
+
+  "$defs": {
+    "Bubble": {
+      "type": "object",
+      "description": "A single floating action bubble presented to the user in the stadium companion app.",
+      "required": ["label", "icon", "agent", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 28,
+          "description": "Short, user-facing action label. Localized to the user's language (Arabic or English). Must fit in a compact floating bubble UI."
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8,
+          "pattern": "^(\\p{Emoji}(\\p{Emoji_Modifier}|\\uFE0F\\u20E3?|\\u200D\\p{Emoji})*)$",
+          "description": "Single emoji character (may include skin-tone modifiers, variation selector, or ZWJ sequences). Rendered as the bubble's primary icon."
+        },
+        "agent": {
+          "type": "string",
+          "enum": ["payment", "navigate", "food", "info", "accessibility", "entertainment"],
+          "description": "Routing key that determines which local agent handler processes this action when the user taps the bubble."
+        },
+        "payload": {
+          "type": "object",
+          "description": "Action-specific parameters. Schema varies by agent type. See the corresponding $defs entry for the exact contract.",
+          "oneOf": [
+            { "$ref": "#/$defs/PaymentPayload" },
+            { "$ref": "#/$defs/NavigatePayload" },
+            { "$ref": "#/$defs/FoodPayload" },
+            { "$ref": "#/$defs/InfoPayload" },
+            { "$ref": "#/$defs/AccessibilityPayload" },
+            { "$ref": "#/$defs/EntertainmentPayload" }
+          ]
+        }
+      }
+    },
+
+    "PaymentPayload": {
+      "type": "object",
+      "description": "Payload for the 'payment' agent. Triggers the payment/checkout flow.",
+      "required": ["merchant", "currency"],
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Pre-filled payment amount in the given currency. Omit if amount is variable (e.g., full menu order)."
+        },
+        "merchant": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Merchant identifier — concession stand name, parking zone, hospitality upgrade title, etc."
+        },
+        "currency": {
+          "type": "string",
+          "const": "QAR",
+          "description": "Currency code. Lusail Stadium only processes payments in Qatari Riyal."
+        },
+        "tap_to_pay": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the payment sheet opens directly to the NFC/contactless prompt (Apple Pay, Google Wallet, contactless card)."
+        }
+      }
+    },
+
+    "NavigatePayload": {
+      "type": "object",
+      "description": "Payload for the 'navigate' agent. Triggers indoor/outdoor wayfinding to a destination.",
+      "required": ["destination", "distance_m", "level"],
+      "additionalProperties": false,
+      "properties": {
+        "destination": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Human-readable destination name. Examples: 'Gate 2', 'Section 134', 'Merchandise Megastore', 'Lusail QNB Metro Station'."
+        },
+        "distance_m": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5000,
+          "description": "Approximate straight-line distance from the scan point to the destination, in meters."
+        },
+        "level": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3],
+          "description": "Destination level. 0 = outside/grounds, 1 = Lower Tier concourse, 2 = Upper Tier concourse, 3 = VIP/Hospitality."
+        },
+        "landmarks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "description": "Ordered waypoint landmarks to guide the user en route. Displayed as turn-by-turn cues."
+        }
+      }
+    },
+
+    "FoodPayload": {
+      "type": "object",
+      "description": "Payload for the 'food' agent. Triggers the food ordering and pickup flow.",
+      "required": ["concession"],
+      "additionalProperties": false,
+      "properties": {
+        "concession": {
+          "type": "string",
+          "pattern": "^[A-H]$",
+          "description": "Concession zone code. A=Al-Sadd Kitchen, B=Champions Grill, C=Spice Market, D=Mediterraneo, E=Falafel Oasis, F=Quick Bites, G=The Brew Stand, H=Hospitality Pantry."
+        },
+        "menu_url": {
+          "type": ["string", "null"],
+          "format": "uri-reference",
+          "maxLength": 256,
+          "description": "Deep-link path or URL to the concession's digital menu. Null if not available."
+        },
+        "wait_min": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 120,
+          "description": "Estimated wait time in minutes. Null if unknown or not applicable (e.g., hospitality catering)."
+        },
+        "pickup_section": {
+          "type": ["integer", "null"],
+          "minimum": 101,
+          "maximum": 230,
+          "description": "Nearest section number to the food pickup counter. Null if pickup is at-suite or not relevant."
+        }
+      }
+    },
+
+    "InfoPayload": {
+      "type": "object",
+      "description": "Payload for the 'info' agent. Displays an information card or FAQ answer.",
+      "required": ["topic", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 50,
+          "description": "Short topic tag for the info card. Examples: 'shuttle_status', 'match_countdown', 'wifi_setup', 'nearby_concessions'."
+        },
+        "body": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 300,
+          "description": "Concise answer or information (1–2 sentences) rendered immediately in the bubble expansion or info card."
+        },
+        "deep_link": {
+          "type": ["string", "null"],
+          "format": "uri-reference",
+          "maxLength": 256,
+          "description": "App route for more detail. Null if the body is self-contained."
+        }
+      }
+    },
+
+    "AccessibilityPayload": {
+      "type": "object",
+      "description": "Payload for the 'accessibility' agent. Triggers accessibility service requests or information.",
+      "required": ["service", "location"],
+      "additionalProperties": false,
+      "properties": {
+        "service": {
+          "type": "string",
+          "enum": ["wheelchair", "hearing_loop", "sensory_room", "companion_ticket", "elevator", "audio_description"],
+          "description": "Accessibility service identifier."
+        },
+        "location": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 120,
+          "description": "Where the user should go or where the service is located."
+        },
+        "staff_alert": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, dispatch a notification to stadium accessibility staff to assist the fan."
+        }
+      }
+    },
+
+    "EntertainmentPayload": {
+      "type": "object",
+      "description": "Payload for the 'entertainment' agent. Triggers fan engagement content.",
+      "required": ["type", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["fan_cam", "trivia", "chant", "selfie_frame", "live_poll", "replay"],
+          "description": "Entertainment content type."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Display title for the entertainment content."
+        },
+        "url": {
+          "type": ["string", "null"],
+          "format": "uri-reference",
+          "maxLength": 256,
+          "description": "Content URL or deep-link path. Null if the content is generated client-side."
+        }
+      }
+    }
+  }
+}

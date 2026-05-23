@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 Dark Theme with Lusail brand green -->
+    <style name="Theme.LusailStadium" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">#228b22</item>
+        <item name="android:colorPrimaryDark">#0a1f0a</item>
+        <item name="android:colorAccent">#2ecc40</item>
+        <item name="android:windowBackground">#FF0A1F0A</item>
+        <item name="android:statusBarColor">#0a1f0a</item>
+        <item name="android:navigationBarColor">#0a1f0a</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowFullscreen">false</item>
+    </style>
+
+    <!-- Network security config for localhost cleartext -->
+    <string name="network_security_config" translatable="false">@xml/network_security_config</string>
+</resources>

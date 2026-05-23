@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lusail Stadium — On-Device AI Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex; height: 100vh; overflow: hidden;
+  }
+
+  /* ─── LEFT: Phone Mockup ─── */
+  .phone-panel {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+    border-right: 1px solid #21262d;
+  }
+  .phone-frame {
+    width: 390px; height: 760px; background: #111; border-radius: 40px;
+    border: 3px solid #30363d; overflow: hidden; position: relative;
+    box-shadow: 0 0 60px rgba(34, 139, 34, 0.15);
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 28px; background: #0a0a0f; border-radius: 0 0 18px 18px;
+    z-index: 10;
+  }
+  .phone-screen {
+    width: 100%; height: 100%; padding: 40px 20px 20px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(180deg, #0d1520 0%, #0a0f18 100%);
+  }
+  .app-header {
+    display: flex; align-items: center; gap: 12px; padding-bottom: 16px;
+    border-bottom: 1px solid #1a3a1a;
+  }
+  .app-logo { width: 32px; height: 32px; background: #228b22; border-radius: 8px; 
+    display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .app-title { font-size: 16px; font-weight: 700; color: #fff; }
+  .app-subtitle { font-size: 11px; color: #58a658; }
+  .scan-area {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 20px;
+  }
+  .scan-context {
+    background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+    padding: 12px 16px; width: 100%; text-align: center;
+  }
+  .scan-label { font-size: 10px; color: #58a658; text-transform: uppercase; letter-spacing: 2px; }
+  .scan-value { font-size: 14px; color: #fff; margin-top: 4px; font-weight: 600; }
+
+  /* Bubbles */
+  .bubbles { display: flex; flex-direction: column; gap: 12px; width: 100%; padding: 0 10px; }
+  .bubble {
+    background: linear-gradient(135deg, #1a3a1a 0%, #0d2818 100%);
+    border: 1px solid #2d5a2d; border-radius: 20px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    animation: float 3s ease-in-out infinite; transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(34, 139, 34, 0.1);
+  }
+  .bubble:hover { border-color: #3a8a3a; box-shadow: 0 6px 25px rgba(34, 139, 34, 0.2); transform: scale(1.02); }
+  .bubble:nth-child(2) { animation-delay: 0.4s; }
+  .bubble:nth-child(3) { animation-delay: 0.8s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .bubble-icon { font-size: 28px; min-width: 40px; text-align: center; }
+  .bubble-text { flex: 1; }
+  .bubble-label { font-size: 14px; font-weight: 600; color: #fff; }
+  .bubble-agent { font-size: 10px; color: #58a658; margin-top: 2px; text-transform: uppercase; }
+  .bubble-tap { font-size: 9px; color: #444; margin-top: 4px; }
+
+  /* ─── RIGHT: Monitor ─── */
+  .monitor-panel {
+    width: 520px; display: flex; flex-direction: column; background: #0d1117;
+    padding: 20px; overflow-y: auto;
+  }
+  .monitor-title {
+    font-size: 13px; font-weight: 700; color: #58a658; text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .status-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+  .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+  .status-dot.loading { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .card {
+    background: #161b22; border: 1px solid #21262d; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .card h3 { font-size: 12px; color: #8b949e; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .stat-label { color: #8b949e; }
+  .stat-value { color: #fff; font-weight: 600; font-family: 'SF Mono', 'Menlo', monospace; }
+  .stat-value.green { color: #22c55e; }
+
+  .log-area {
+    background: #0a0f18; border: 1px solid #21262d; border-radius: 8px;
+    padding: 10px 12px; height: 280px; overflow-y: auto;
+    font-family: 'SF Mono', 'Menlo', monospace; font-size: 11px;
+    margin-top: 8px;
+  }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid #1a1a2e; }
+  .log-time { color: #58a658; margin-right: 8px; }
+  .log-req { color: #f59e0b; }
+  .log-resp { color: #22c55e; }
+  .log-err { color: #ef4444; }
+
+  .btn {
+    background: #228b22; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: background 0.2s; width: 100%; margin-top: 8px;
+  }
+  .btn:hover { background: #2da02d; }
+  .btn:disabled { background: #1a3a1a; color: #555; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  .demo-scenarios { display: flex; gap: 8px; margin-top: 8px; }
+  .scenario-chip {
+    background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+    padding: 6px 10px; font-size: 11px; cursor: pointer; color: #8b949e;
+    transition: all 0.2s; flex: 1; text-align: center;
+  }
+  .scenario-chip:hover, .scenario-chip.active { 
+    background: #1a3a1a; border-color: #58a658; color: #fff; 
+  }
+</style>
+</head>
+<body>
+
+<!-- LEFT: Phone -->
+<div class="phone-panel">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="app-header">
+        <div class="app-logo">🏟️</div>
+        <div>
+          <div class="app-title">Lusail Companion</div>
+          <div class="app-subtitle" id="scanStatus">Aim camera at signage</div>
+        </div>
+      </div>
+      <div class="scan-area">
+        <div class="scan-context" id="scanContext" style="display:none">
+          <div class="scan-label">SCAN DETECTED</div>
+          <div class="scan-value" id="scanValue"></div>
+        </div>
+        <div class="bubbles" id="bubbles"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Monitor -->
+<div class="monitor-panel">
+  <div class="monitor-title">
+    <span class="status-dot offline" id="statusDot"></span>
+    LOCAL INFERENCE MONITOR
+  </div>
+
+  <div class="card">
+    <h3>DEVICE</h3>
+    <div class="stat-row"><span class="stat-label">Status</span><span class="stat-value" id="devStatus">Disconnected</span></div>
+    <div class="stat-row"><span class="stat-label">Model</span><span class="stat-value">Gemma 4 E2B (LiteRT)</span></div>
+    <div class="stat-row"><span class="stat-label">Backend</span><span class="stat-value" id="devBackend">—</span></div>
+    <div class="stat-row"><span class="stat-label">Port</span><span class="stat-value">localhost:8080</span></div>
+  </div>
+
+  <div class="card">
+    <h3>LAST INFERENCE</h3>
+    <div class="stat-row"><span class="stat-label">Response time</span><span class="stat-value green" id="infTime">— ms</span></div>
+    <div class="stat-row"><span class="stat-label">Tokens generated</span><span class="stat-value" id="infTokens">—</span></div>
+    <div class="stat-row"><span class="stat-label">Tokens/sec</span><span class="stat-value green" id="infTps">—</span></div>
+    <div class="stat-row"><span class="stat-label">Prompt tokens</span><span class="stat-value" id="infPrompt">—</span></div>
+  </div>
+
+  <div class="card">
+    <h3>SCAN CONTEXT</h3>
+    <div class="demo-scenarios">
+      <button class="scenario-chip active" onclick="triggerScan('parking')">🅿️ Parking</button>
+      <button class="scenario-chip" onclick="triggerScan('gate')">🚪 Gate</button>
+      <button class="scenario-chip" onclick="triggerScan('concession')">🍔 Food</button>
+      <button class="scenario-chip" onclick="triggerScan('section')">💺 Seat</button>
+    </div>
+    <button class="btn" onclick="triggerScan('parking')" id="inferBtn" disabled>
+      RUN LOCAL INFERENCE
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>REQUEST LOG</h3>
+    <div class="log-area" id="logArea"></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8080';
+
+const SCAN_CONTEXTS = {
+  parking: {
+    scan_type: "beacon_scan",
+    beacon_type: "parking_qr",
+    lot_id: "P2",
+    lot_name: "East Park & Ride",
+    capacity_pct: 72,
+    shuttle_wait_min: 4,
+    nearest_gate: "Gate 2",
+    distance_to_gate_m: 180,
+    match_time: "pre_match",
+    match: "FIFA World Cup 2026 — Quarter Final",
+    kickoff: "19:00",
+    current_time: "17:15",
+    user_language: "en"
+  },
+  gate: {
+    scan_type: "beacon_scan",
+    beacon_type: "entry_gate",
+    gate_id: "G3",
+    gate_name: "South Gate",
+    queue_length: "light",
+    estimated_wait_min: 3,
+    section: 134,
+    row: "J",
+    seat: 12,
+    hospitality_tier: null,
+    match: "FIFA World Cup 2026 — Quarter Final",
+    user_language: "en"
+  },
+  concession: {
+    scan_type: "beacon_scan",
+    beacon_type: "concession_qr",
+    zone: "B",
+    zone_name: "Champions Grill",
+    cuisine: "Western — burgers, hot dogs",
+    estimated_wait_min: 8,
+    nearby_sections: "116–130",
+    match: "FIFA World Cup 2026 — Quarter Final",
+    user_language: "en"
+  },
+  section: {
+    scan_type: "beacon_scan",
+    beacon_type: "section_nfc",
+    section: 134,
+    row: "J",
+    seat: 12,
+    category: "Category 2 (Mid-Lower)",
+    nearest_concession: "B — Champions Grill",
+    nearest_gate: "Gate 3",
+    nearest_first_aid: "Level 1 near Gate 3",
+    match: "FIFA World Cup 2026 — Quarter Final",
+    user_language: "en"
+  }
+};
+
+let serverReady = false;
+let logEntries = [];
+
+function log(msg, cls = '') {
+  const now = new Date().toLocaleTimeString();
+  logEntries.unshift({ time: now, msg, cls });
+  if (logEntries.length > 50) logEntries.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('logArea');
+  el.innerHTML = logEntries.slice(0, 30).map(e => 
+    `<div class="log-entry"><span class="log-time">${e.time}</span><span class="${e.cls}">${e.msg}</span></div>`
+  ).join('');
+}
+
+async function checkHealth() {
+  try {
+    const start = performance.now();
+    const resp = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+    const data = await resp.json();
+    const latency = Math.round(performance.now() - start);
+    
+    serverReady = data.ready === true;
+    document.getElementById('statusDot').className = 'status-dot ' + (serverReady ? 'online' : 'loading');
+    document.getElementById('devStatus').textContent = serverReady ? 'Ready' : 'Loading model...';
+    document.getElementById('devBackend').textContent = data.gpu ? 'GPU (OpenCL)' : 'CPU';
+    document.getElementById('inferBtn').disabled = !serverReady;
+    document.getElementById('scanStatus').textContent = serverReady ? 'Ready to scan' : 'Loading AI...';
+    
+    log(`Health check: ${data.status} | GPU: ${data.gpu} | Ready: ${data.ready}`, 'log-resp');
+    return serverReady;
+  } catch (e) {
+    document.getElementById('statusDot').className = 'status-dot offline';
+    document.getElementById('devStatus').textContent = 'Disconnected';
+    document.getElementById('inferBtn').disabled = true;
+    return false;
+  }
+}
+
+async function triggerScan(type) {
+  // Highlight active chip
+  document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[onclick*="${type}"]`)?.classList.add('active');
+  
+  const ctx = SCAN_CONTEXTS[type];
+  if (!ctx) return;
+  
+  // Show scan context on phone
+  document.getElementById('scanContext').style.display = 'block';
+  document.getElementById('scanValue').textContent = `${ctx.beacon_type.replace('_',' ').toUpperCase()} — ${Object.values(ctx).slice(1,3).join(', ')}`;
+  document.getElementById('scanStatus').textContent = 'Scan detected ✓';
+  
+  // Check server
+  if (!serverReady) {
+    log('Server not ready — attempting health check...', 'log-err');
+    await checkHealth();
+    if (!serverReady) {
+      log('Server still not available', 'log-err');
+      return;
+    }
+  }
+
+  log(`SCAN: ${type} — ${ctx.beacon_type}`, 'log-req');
+  
+  // Build prompt from our system prompt + scan context
+  const systemPrompt = await loadSystemPrompt();
+  const scanJson = JSON.stringify(ctx, null, 2);
+  
+  const fullPrompt = `${systemPrompt}
+
+SCAN CONTEXT:
+\`\`\`json
+${scanJson}
+\`\`\`
+
+Based on this scan context, return exactly 2-3 floating action bubbles as JSON (no other text).`;
+
+  document.getElementById('inferBtn').disabled = true;
+  document.getElementById('inferBtn').textContent = 'INFERRING...';
+  
+  try {
+    const start = performance.now();
+    const resp = await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: fullPrompt, stream: false }),
+      signal: AbortSignal.timeout(60000)
+    });
+    
+    const data = await resp.json();
+    const elapsed = Math.round(performance.now() - start);
+    
+    // Extract JSON from response
+    let bubbles = [];
+    try {
+      const jsonMatch = data.response.match(/\[[\s\S]*\]/);
+      if (jsonMatch) bubbles = JSON.parse(jsonMatch[0]);
+      else bubbles = JSON.parse(data.response);
+    } catch {
+      log('Failed to parse bubble JSON from response', 'log-err');
+      document.getElementById('bubbles').innerHTML = `<div class="scan-context"><span style="color:#ef4444">Parse error</span><br/><small>${data.response.substring(0,200)}...</small></div>`;
+      return;
+    }
+    
+    // Render bubbles on phone
+    renderBubbles(bubbles);
+    
+    // Update stats
+    document.getElementById('infTime').textContent = `${elapsed} ms`;
+    document.getElementById('infTokens').textContent = data.tokens || '—';
+    document.getElementById('infTps').textContent = data.tokens ? (data.tokens / (elapsed / 1000)).toFixed(1) : '—';
+    
+    log(`Inference: ${elapsed}ms | ${data.tokens || '?'} tokens | ${data.ms || '?'}ms server`, 'log-resp');
+    log(`Response: ${JSON.stringify(bubbles).substring(0, 120)}...`, '');
+    
+  } catch (e) {
+    log(`Error: ${e.message}`, 'log-err');
+  } finally {
+    document.getElementById('inferBtn').disabled = false;
+    document.getElementById('inferBtn').textContent = 'RUN LOCAL INFERENCE';
+  }
+}
+
+function renderBubbles(bubbles) {
+  const container = document.getElementById('bubbles');
+  if (!bubbles || bubbles.length === 0) {
+    container.innerHTML = '<div class="scan-context"><span style="color:#888">No actions available</span></div>';
+    return;
+  }
+  container.innerHTML = bubbles.map(b => `
+    <div class="bubble" onclick="handleBubbleTap('${b.agent}', '${b.label}')">
+      <div class="bubble-icon">${b.icon || '📍'}</div>
+      <div class="bubble-text">
+        <div class="bubble-label">${b.label}</div>
+        <div class="bubble-agent">${b.agent}</div>
+      </div>
+      <div class="bubble-tap">TAP →</div>
+    </div>
+  `).join('');
+  
+  log(`Rendered ${bubbles.length} bubbles: ${bubbles.map(b=>b.label).join(' | ')}`, '');
+}
+
+function handleBubbleTap(agent, label) {
+  log(`USER TAPPED: ${agent} — "${label}"`, 'log-req');
+  // Pulse animation
+  const bubbles = document.querySelectorAll('.bubble');
+  bubbles.forEach(b => b.style.transform = 'scale(1.05)');
+  setTimeout(() => bubbles.forEach(b => b.style.transform = ''), 200);
+}
+
+async function loadSystemPrompt() {
+  // In production, this would be loaded from the agentic workflow files
+  // For demo, embed the key instructions
+  return `You are the Lusail Stadium Matchday Companion. Output ONLY valid JSON — exactly 2-3 floating action bubbles. No preamble.
+
+VENUE: Lusail Iconic Stadium — 88,966 seats
+Gates: 1=North VIP, 2=East General, 3=South Family, 4=West Media
+Concessions: A=Qatari, B=Western, C=Asian, D=Italian, E=Veg, F=Snacks
+Parking: P1=VIP, P2=East, P3=Accessible, P4=Media, P5=Lusail Blvd
+
+JSON format: [{label, icon, agent, payload:{...}}]
+Agents: payment, navigate, food, info, accessibility, entertainment`;
+}
+
+// Poll health every 3s
+setInterval(checkHealth, 3000);
+checkHealth();
+
+log('Demo split view ready — connecting to localhost:8080...', '');
+</script>
+</body>
+</html>

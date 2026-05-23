@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lusail Companion</string>
+    <string name="scan_again">Scan Again</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Thinking…</string>
+    <string name="error_connection">Connection Lost</string>
+    <string name="verify_title">Verifying Integrity</string>
+    <string name="verify_subtitle">Cryptographic seal verification in progress…</string>
+    <string name="verified">Seal Verified</string>
+    <string name="launching">Launching Companion…</string>
+</resources>

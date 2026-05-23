@@ -1,0 +1,11 @@
+.gradle/
+build/
+*.apk
+*.aab
+*.keystore
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+.idea/
+*.iml
+.DS_Store
+mr-qr-lib/
