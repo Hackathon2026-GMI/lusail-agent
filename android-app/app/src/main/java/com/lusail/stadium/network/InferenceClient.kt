@@ -33,12 +33,16 @@ data class InferenceRequest(
  * Body: { "context": <serialized ScanContext>, "system_prompt": "..." }
  * Response: BubbleResponse JSON
  *
+ * The user profile (from USER.md) is appended to the system prompt so the
+ * model can personalize responses, pre-fill forms, and give context-aware help.
+ *
  * Handles retry with exponential backoff for transient failures.
  */
 class InferenceClient(
     private val baseUrl: String = "http://localhost:8080",
     private val maxRetries: Int = 3,
-    private val baseBackoffMs: Long = 500L
+    private val baseBackoffMs: Long = 500L,
+    private val userProfile: String = ""
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -164,7 +168,7 @@ class InferenceClient(
     }
 
     private fun buildSystemPrompt(): String {
-        return """
+        val basePrompt = """
 You are the Lusail Stadium Matchday Companion AI, running on-device via Gemma 4.
 Your role is to help fans at Lusail Iconic Stadium in Qatar navigate their matchday experience.
 
@@ -180,5 +184,19 @@ Bubble types:
 
 Always respond in a helpful, stadium-appropriate tone. Keep responses under 150 tokens total.
             """.trimIndent()
+
+        // Append user profile so the model knows who it's helping
+        if (userProfile.isNotBlank()) {
+            return buildString {
+                append(basePrompt)
+                append("\n\n--- USER PROFILE ---\n")
+                append("Use this profile to personalize responses, pre-fill forms, ")
+                append("and give context-aware suggestions. ")
+                append("Reference the user by name when appropriate.\n\n")
+                append(userProfile)
+            }
         }
+
+        return basePrompt
+    }
 }

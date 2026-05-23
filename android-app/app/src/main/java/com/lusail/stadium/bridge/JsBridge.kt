@@ -21,7 +21,8 @@ import kotlinx.serialization.json.Json
  * Exposed to JavaScript as: window.LusailBridge.infer(scanContextJson, callbackId)
  */
 class JsBridge(
-    private val webView: WebView
+    private val webView: WebView,
+    private val userProfile: String = ""
 ) {
     companion object {
         private const val TAG = "LusailBridge"
@@ -34,7 +35,7 @@ class JsBridge(
         coerceInputValues = true
     }
 
-    private val inferenceClient = InferenceClient()
+    private val inferenceClient = InferenceClient(userProfile = userProfile)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     /**
@@ -64,10 +65,6 @@ class JsBridge(
 
                 result.fold(
                     onSuccess = { bubbleResponse ->
-                        val responseJson = json.encodeToString(
-                            kotlinx.serialization.builtins.serializer<kotlinx.serialization.json.JsonObject>()
-                        )
-                        // Actually use the bubble response serializer
                         val bubbleJson = json.encodeToString(
                             com.lusail.stadium.models.BubbleResponse.serializer(),
                             bubbleResponse
