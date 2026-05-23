@@ -181,6 +181,13 @@ Bubble types:
 - "comm": Connect to stadium services (concierge, food ordering, first aid)
 - "info": Provide relevant information (match stats, player bios, schedule)
 - "scan": Prompt another scan (merchandise, food menu QR, etc.)
+- "form": The scan payload is a form URL (Google Form, registration, survey, etc.).
+  Generate a "form" bubble with a payload containing:
+  - "url": the form URL from the scan
+  - "prefill": a JSON object mapping common form field names to values from the user profile.
+    Use field names like: name, email, phone, city, state, country, ticket_tier, section, gate,
+    dietary, notes. Only include fields that exist in the profile. If the profile has no value
+    for a field, omit it. The app will inject these into the form automatically.
 
 Always respond in a helpful, stadium-appropriate tone. Keep responses under 150 tokens total.
             """.trimIndent()
@@ -203,9 +210,16 @@ Always respond in a helpful, stadium-appropriate tone. Keep responses under 150 
                 append("7. PRE-MATCH: If scan is near kickoff and profile says arrival 45 min early, acknowledge their routine.\n")
                 append("8. FORM PRE-FILL: When a bubble triggers a form (food order, info request), pre-populate fields\n")
                 append("   from the profile. The user confirms, they don't retype.\n")
-                append("9. PRIVACY: Never display phone, email, or ticket_id in narration or bubble labels.\n")
+                append("9. FORM URL DETECTION: If the scan payload is a URL containing 'forms' or 'docs.google.com/forms',\n")
+                append("   it's a form. Generate a 'form' bubble. Map profile fields to prefill keys like this:\n")
+                append("   profile.name → prefill.name | profile.email → prefill.email | profile.phone → prefill.phone\n")
+                append("   profile.city → prefill.city | profile.state → prefill.state | profile.country → prefill.country\n")
+                append("   profile.ticket_tier → prefill.ticket_tier | profile.usual_section → prefill.section\n")
+                append("   profile.usual_gate → prefill.gate | profile.dietary → prefill.dietary\n")
+                append("   profile.notes (travel_context) → prefill.notes\n")
+                append("10. PRIVACY: Never display phone, email, or ticket_id in narration or bubble labels.\n")
                 append("   These are for backend form pre-fill only — stay out of the visible UI.\n")
-                append("10. TONE: Reference profile details conversationally. Don't list them — weave them in naturally.\n")
+                append("11. TONE: Reference profile details conversationally. Don't list them — weave them in naturally.\n")
                 append("    'Your usual karak chai at The Brew Stand, Kailor?' not 'User prefers karak chai.'\n\n")
                 append("--- USER PROFILE ---\n\n")
                 append(userProfile)

@@ -32,7 +32,7 @@
         },
         "agent": {
           "type": "string",
-          "enum": ["payment", "navigate", "food", "info", "accessibility", "entertainment"],
+          "enum": ["payment", "navigate", "food", "info", "accessibility", "entertainment", "form"],
           "description": "Routing key that determines which local agent handler processes this action when the user taps the bubble."
         },
         "payload": {
@@ -44,7 +44,8 @@
             { "$ref": "#/$defs/FoodPayload" },
             { "$ref": "#/$defs/InfoPayload" },
             { "$ref": "#/$defs/AccessibilityPayload" },
-            { "$ref": "#/$defs/EntertainmentPayload" }
+            { "$ref": "#/$defs/EntertainmentPayload" },
+            { "$ref": "#/$defs/FormPayload" }
           ]
         }
       }
@@ -224,6 +225,40 @@
           "format": "uri-reference",
           "maxLength": 256,
           "description": "Content URL or deep-link path. Null if the content is generated client-side."
+        }
+      }
+    },
+
+    "FormPayload": {
+      "type": "object",
+      "description": "Payload for the 'form' agent. Auto-fills a web form (Google Form, registration, survey) using the user profile.",
+      "required": ["url"],
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 10,
+          "maxLength": 512,
+          "description": "The form URL from the QR scan payload."
+        },
+        "prefill": {
+          "type": "object",
+          "description": "Field-to-value mappings for form pre-fill. Keys are common form field names, values come from the user profile.",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "phone": { "type": "string" },
+            "city": { "type": "string" },
+            "state": { "type": "string" },
+            "country": { "type": "string" },
+            "ticket_tier": { "type": "string" },
+            "section": { "type": "string" },
+            "gate": { "type": "string" },
+            "dietary": { "type": "string" },
+            "notes": { "type": "string" }
+          },
+          "additionalProperties": true
         }
       }
     }

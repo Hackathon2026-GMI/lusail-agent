@@ -24,8 +24,12 @@ import com.lusail.stadium.network.InferenceClient
 import com.lusail.stadium.network.QrValidator
 import com.lusail.stadium.ui.BubbleScreen
 import com.lusail.stadium.ui.CryptoShieldScreen
+import com.lusail.stadium.ui.FormFillScreen
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Main entry point for the Lusail Stadium Matchday Companion.
@@ -54,6 +58,12 @@ class MainActivity : ComponentActivity() {
     private var scanContextData: ScanContext? = null
     private var webView: WebView? = null
     private var userProfile: String = ""
+
+    // Form fill state (class-level so handleFormBubble can access)
+    private var showForm by mutableStateOf(false)
+    private var formUrl by mutableStateOf("")
+    private var formPrefill by mutableStateOf<Map<String, String>>(emptyMap())
+    private var formTitle by mutableStateOf("")
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,7 +164,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            if (showCryptoShield) {
+            if (showForm) {
+                // Form fill screen
+                FormFillScreen(
+                    url = formUrl,
+                    prefill = formPrefill,
+                    formTitle = formTitle,
+                    onBack = { showForm = false }
+                )
+            } else if (showCryptoShield) {
                 // Holographic verification screen
                 CryptoShieldScreen(
                     onVerificationComplete = {
@@ -478,6 +496,40 @@ class MainActivity : ComponentActivity() {
                 // In a real app: launch camera for another scan
                 Log.d(TAG, "Scan again: ${bubble.payload}")
             }
+            "form" -> {
+                // Open the form URL in a WebView with profile pre-fill
+                handleFormBubble(bubble)
+            }
+        }
+    }
+
+    /**
+     * Parse a "form" bubble payload and launch the FormFillScreen.
+     * Payload: { url: "https://...", prefill: { name: "Leo", ... } }
+     */
+    private fun handleFormBubble(bubble: Bubble) {
+        try {
+            val payloadJson = Json.parseToJsonElement(bubble.payload)
+            val obj = payloadJson.jsonObject
+
+            val formUrl = obj["url"]?.jsonPrimitive?.content ?: run {
+                Log.w(TAG, "Form bubble missing url field")
+                return
+            }
+
+            val prefillJson = obj["prefill"]?.jsonObject ?: JsonObject(emptyMap())
+            val prefillMap = prefillJson.entries.associate { (k, v) ->
+                k to (v.jsonPrimitive?.content ?: v.toString())
+            }
+
+            formUrl = formUrl
+            formPrefill = prefillMap
+            formTitle = bubble.label.ifEmpty { "Form" }
+            showForm = true
+
+            Log.d(TAG, "Form opened: $formUrl with ${prefillMap.size} prefill fields")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse form bubble payload: ${e.message}", e)
         }
     }
 
