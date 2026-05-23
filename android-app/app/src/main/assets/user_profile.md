@@ -4,47 +4,63 @@ This file is injected into the local Gemma 4 model's system prompt so it
 can personalize responses, pre-fill forms, and give context-aware help.
 
 ## Identity
-name: Kailor
-preferred_language: English (also speaks Arabic)
-timezone: Asia/Qatar (UTC+3)
+name: Leo Messi
+preferred_language: English (some Spanish)
+timezone: America/Chicago (UTC-5)
 
 ## Contact
-email: kailor@example.com
-phone: +974-XXXX-XXXX
+email: leo.messi@bayoumail.com
+phone: +1-504-XXX-XXXX
+
+## Home
+city: Jena
+parish: LaSalle
+state: Louisiana
+country: United States
+nearest_metro: New Orleans (~3.5 hour drive north)
 
 ## Ticket & Seating
-ticket_tier: premium
-usual_section: 134
-usual_gate: 3 (South Gate / Family Zone)
-loyalty_tier: Gold
+ticket_tier: standard
+usual_section: 118
+usual_gate: 2 (East Gate)
+loyalty_tier: Silver
 
 ## Preferences
-dietary: halal, prefers grilled over fried
-beverage: karak chai, Arabic coffee
-payment_method: Google Wallet (NFC)
-walking_pace: normal
-seat_preference: aisle
+dietary: no restrictions, loves spicy food, avoids pork
+beverage: iced sweet tea, prefers cold drinks in stadium heat
+payment_method: Apple Pay
+walking_pace: relaxed (on vacation mode)
+seat_preference: anywhere with a good view of the pitch
 
 ## Accessibility
 wheelchair: false
 hearing_aid: false
-prefers_elevator: true (avoids long stair climbs)
+prefers_elevator: false
 service_animal: false
 
 ## Football
-favorite_team: Qatar National Team
-favorite_player: Akram Afif
-watches: every home match
-second_team: Al-Sadd SC
+favorite_team: Argentina National Team
+favorite_player: himself (jokingly — actually really admires Julian Alvarez)
+watches: traveling fan, first time at Lusail Stadium
+second_team: New Orleans Pelicans (NBA — different sport but he loves his local teams)
 
 ## Stadium Habits
-arrival: 45 minutes before kickoff
-usual_parking: P3 (South Accessible)
-pre_match_routine: karak chai at The Brew Stand, then to seat
-merchandise: collects matchday scarves
-concession_favorites: Al-Sadd Kitchen (Zone A)
+arrival: 2 hours before kickoff (first-time visitor, wants to explore)
+usual_parking: P2 (East Park & Ride — shuttle from hotel)
+pre_match_routine: walks the concourse, takes photos, finds his seat early
+merchandise: definitely buying a matchday scarf for the collection
+concession_favorites: wants to try everything — first time at a Qatari stadium
+
+## Travel Context
+visiting_from: Louisiana, USA
+travel_group: solo trip
+hotel: Lusail Marina district
+local_transport: Doha Metro + stadium shuttle
+return_flight: 3 days after match — staying to explore Doha
 
 ## Notes
-- Attending with family (2 adults, 2 children) on matchdays
-- Prefers Arabic commentary when available
-- Uses the app primarily for wayfinding, food ordering, and match stats
+- First time in Qatar — excited about the stadium cooling technology
+- Taking lots of photos for family back in Louisiana
+- Wants recommendations for post-match food in Lusail City
+- Curious about local customs and stadium etiquette
+- Speaks some Spanish, will try a few Arabic phrases
