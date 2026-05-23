@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
     private var jsBridge: JsBridge? = null
     private var scanContextData: ScanContext? = null
     private var webView: WebView? = null
+    private var userProfile: String = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +62,14 @@ class MainActivity : ComponentActivity() {
 
         // Parse any deep link data from the intent
         parseIncomingIntent(intent)
+
+        // Load user profile from assets for personalized model responses
+        userProfile = try {
+            assets.open("user_profile.md").bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            Log.w(TAG, "User profile not found in assets, running without personalization")
+            ""
+        }
 
         // Start the foreground service for the inference bridge
         startInferenceBridgeService()
@@ -86,7 +95,7 @@ class MainActivity : ComponentActivity() {
             suspend fun doInference(ctx: ScanContext) {
                 isLoading = true
                 error = null
-                val client = InferenceClient()
+                val client = InferenceClient(userProfile = userProfile)
                 client.infer(ctx).fold(
                     onSuccess = { response ->
                         bubbleResponse = response
@@ -246,7 +255,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Parse deep link data from the intent.
-     * Supports: open.lusail.qa://*/* and https://open.lusail.qa/*
+     * Supports: open.lusail.qa scheme and https:\/\/open.lusail.qa
      */
     private fun parseIncomingIntent(intent: Intent) {
         val data: Uri? = intent.data
@@ -388,7 +397,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Create and add JS bridge
-        val bridge = JsBridge(webView)
+        val bridge = JsBridge(webView, userProfile = userProfile)
         jsBridge = bridge
         webView.addJavascriptInterface(bridge, "LusailBridge")
 
