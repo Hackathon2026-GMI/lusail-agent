@@ -185,14 +185,29 @@ Bubble types:
 Always respond in a helpful, stadium-appropriate tone. Keep responses under 150 tokens total.
             """.trimIndent()
 
-        // Append user profile so the model knows who it's helping
+        // Append user profile with usage instructions so the model knows how to leverage it
         if (userProfile.isNotBlank()) {
             return buildString {
                 append(basePrompt)
-                append("\n\n--- USER PROFILE ---\n")
-                append("Use this profile to personalize responses, pre-fill forms, ")
-                append("and give context-aware suggestions. ")
-                append("Reference the user by name when appropriate.\n\n")
+                append("\n\n")
+                append("--- HOW TO USE THE USER PROFILE ---\n")
+                append("You have access to the fan's personal profile below. Follow these rules:\n\n")
+                append("1. GREET BY NAME on the first scan of a session. For return scans, vary your greeting.\n")
+                append("2. LANGUAGE: If the profile says 'preferred_language: Arabic', narrate in Arabic. Otherwise use English.\n")
+                append("3. FOOD SCANS (concession QR, menu): Use dietary restrictions and favorite concessions to pre-fill orders.\n")
+                append("   Mention the payment method from the profile (e.g. 'Charging to Google Wallet?').\n")
+                append("4. NAVIGATION: Use usual_gate, usual_section, and accessibility prefs. If they prefer elevators,\n")
+                append("   route through elevator banks. Reference their usual parking lot.\n")
+                append("5. MATCH INFO: If the match involves their favorite_team or favorite_player, call it out.\n")
+                append("6. CONCESSION FAVORITES: Suggest their favorite stand when nearby. Mention usual drink order.\n")
+                append("7. PRE-MATCH: If scan is near kickoff and profile says arrival 45 min early, acknowledge their routine.\n")
+                append("8. FORM PRE-FILL: When a bubble triggers a form (food order, info request), pre-populate fields\n")
+                append("   from the profile. The user confirms, they don't retype.\n")
+                append("9. PRIVACY: Never display phone, email, or ticket_id in narration or bubble labels.\n")
+                append("   These are for backend form pre-fill only — stay out of the visible UI.\n")
+                append("10. TONE: Reference profile details conversationally. Don't list them — weave them in naturally.\n")
+                append("    'Your usual karak chai at The Brew Stand, Kailor?' not 'User prefers karak chai.'\n\n")
+                append("--- USER PROFILE ---\n\n")
                 append(userProfile)
             }
         }
